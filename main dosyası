@@ -1,0 +1,99 @@
+client.on("message", async(message) => {
+
+
+
+
+
+if (message.content.toLowerCase() === '!destek') {
+let kanal1 = await db.fetch(`destekkanal_${message.guild.id}`)
+
+if (message.channel.id != kanal1) return message.channel.send(new Discord.RichEmbed().setColor('RANDOM').setDescription(`Bu komudu sadece <#${kanal1}> kanalında kullanabilirsin.`)).then(msg => msg.delete(10000))
+if(message.channel.id == kanal1)  {
+    const reason = message.content.split(" ").slice(1).join(" ");
+    if (message.guild.channels.exists("name", "destek-" + message.author.id)) return message.channel.send(`Bir yardım talebine zaten sahipsin.`);
+  if (!message.guild.channels.filter(c => c.type === 'category').find(c => c.name === 'Destek')) {
+    let knl = message.guild.createChannel('Destek', 'category').then(ds => {
+        message.guild.createChannel(`destek-${message.author.id}`, "text").then(c => {
+let destekrol = db.get(`destekrol_${message.guild.id}`)
+        let role = message.guild.roles.find("id", `destekrol`);
+          let role2 = message.guild.roles.find("name", "@everyone");
+          c.overwritePermissions(role, {
+              SEND_MESSAGES: true,
+              READ_MESSAGES: true
+          });
+          c.overwritePermissions(role2, {
+              SEND_MESSAGES: false,
+              READ_MESSAGES: false
+          });
+
+          c.overwritePermissions(message.author, {
+              SEND_MESSAGES: true,
+              READ_MESSAGES: true
+          });
+          message.channel.send(`:white_check_mark: Yardım talebiniz oluşturuldu, #${c.name}.`);
+          const embed = new Discord.RichEmbed()
+          .setColor(0xCF40FA)
+          .addField(`Hey ${message.author.username}!`, `Yardım talebini neden açtığınızı açıkca anlatın. Destek ekibi en kısa zamanda cevap verecektir @everyone`)
+.addField(`kapatmak için`,`-kapat yazınız.`)
+          .setTimestamp();
+          c.send({ embed: embed });
+        c.setParent(ds)
+      }).catch(console.error);
+    })
+    }
+  let kanal = message.guild.channels.filter(c => c.type === 'category').find(c => c.name === `Destek`);
+  if (kanal) {
+    message.guild.createChannel(`destek-${message.author.id}`, "text").then(c => {
+let destekrol = db.get(`destekrol_${message.guild.id}`)
+        let role = message.guild.roles.find("id",`${destekrol}`);
+        let role2 = message.guild.roles.find("name", "@everyone");
+        c.overwritePermissions(role, {
+            SEND_MESSAGES: true,
+            READ_MESSAGES: true
+        });
+        c.overwritePermissions(role2, {
+            SEND_MESSAGES: false,
+            READ_MESSAGES: false
+        });
+        c.overwritePermissions(message.author, {
+            SEND_MESSAGES: true,
+            READ_MESSAGES: true
+        });
+        message.channel.send(`:white_check_mark: Yardım talebiniz oluşturuldu, #${c.name}.`);
+        const embed = new Discord.RichEmbed()
+        .setColor(0xCF40FA)
+        .addField(`Hey ${message.author.username}!`, `Yardım talebini neden açtığınızı açıkca anlatın. Destek ekibi en kısa zamanda cevap verecektir @everyone`)
+
+        .setTimestamp();
+        c.send({ embed: embed });
+      c.setParent(kanal)
+    }).catch(console.error);
+  }
+    }
+}
+if (message.content.toLowerCase().startsWith(prefix + `kapat`)) {
+    if (!message.channel.name.startsWith(`destek-`)) return message.channel.send(`Yardım talebinizi yardım talebi kanalınızın dışındaki kanallarda kapatamazsınız.`);
+
+    message.channel.send(`Emin misin? Onayladıktan sonra geri alınamaz!\nOnaylamak için,\`!onayla\`. Yazmak için 10 saniyen var yoksa kendiliğinden iptal olur.`)
+    .then((m) => {
+      message.channel.awaitMessages(response => response.content === '!onayla', {
+        max: 1,
+        time: 10000,
+        errors: ['time'],
+      })
+
+
+      .then((collected) => {
+
+          message.channel.delete();
+message.guild.channels.delete();
+        })
+        .catch(() => {
+          m.edit('Kapatma talebinin zamanı geçti yardım talebin kapatılmadı.').then(m2 => {
+              m2.delete();
+          }, 3000);
+        });
+    });
+}
+
+});
